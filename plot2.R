@@ -1,24 +1,32 @@
-  ## Read the ; deliminated text file and save in a dtaa frame
-  df_all <- read.csv("household_power_consumption.txt", header=TRUE, sep=';', na.strings="?",stringsAsFactors=FALSE)
+plot2 <- function()
+{
+  library(reshape2)
+  library(ggplot2)
   
-  df_all$Date <- as.Date(df_all$Date, format="%d/%m/%Y")
+  ## Read RDS files
   
-  ## Only data for 2007-02-01 and 2007-02-02 required.
+  ## currect directory is Getting and Cleaning Data. Files are in Course Project 2 in the current working directory
   
-  data_sub <- subset(df_all, subset=(Date >= "2007-02-01" & Date <= "2007-02-02"))
+  NEI <- readRDS("./Course Project 2/summarySCC_PM25.rds")
   
-  ## Converting dates
-  datetime <- paste(as.Date(data_sub$Date), data_sub$Time)
-  data_sub$Datetime <- as.POSIXct(datetime)
+  ## Only the data for Maryland needed for plotting
   
-
-  ## Plot to the screen 
-  plot(data_sub$Global_active_power~data_sub$Datetime, type="l", ylab="Global Active Power (kilowatts)", xlab="", col = "navyblue")
+  NEI <- subset(NEI, fips == '24510')
   
-  # Also save png image of the plot to working directory.
-  png(file="plot2.png", height=480, width=480)
+  # Sum the emission by year -- this might about a minute.
   
-  plot(data_sub$Global_active_power~data_sub$Datetime, type="l", ylab="Global Active Power (kilowatts)", xlab="", col = "navyblue")
+  total_emissions_by_year <- aggregate(NEI$Emissions, by = list(NEI$year), FUN = sum)
   
-  ## Close the graphics
+  total_emissions_by_year
+  
+  ## Plotting and file saving 
+  
+  png(filename = "./Course Project 2/plot2.png")
+  
+  total_emissions_by_year_thou <- round(total_emissions_by_year[, 2] / 1000, 2)
+  
+  barplot(total_emissions_by_year_thou, names.arg = total_emissions_by_year$Group.1,main = "Annual amount of PM2.5 emitted in  Baltimore City, Maryland", xlab = "Year", ylab = "Amount of PM2.5 emitted, in thousand tons", col = "purple")
+  
   dev.off()
+  
+}

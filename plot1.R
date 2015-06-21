@@ -1,17 +1,26 @@
-  ## Read the ; deliminated text file and save in a dtaa frame
-  df_all <- read.csv("household_power_consumption.txt", header=TRUE, sep=';', na.strings="?",stringsAsFactors=FALSE)
+plot1 <- function()
+{
+  ## Read RDS files
   
-  ## Date type format
-  df_all$Date <- as.Date(df_all$Date, format="%d/%m/%Y")
+  ## currect directory is Getting and Cleaning Data. Files are in Course Project 2 folder in the current working directory
   
-  ## Only data for 2007-02-01 and 2007-02-02 required.
-  data_sub <- subset(df_all, subset=(Date >= "2007-02-01" & Date <= "2007-02-02"))
+  NEI <- readRDS("./Course Project 2/summarySCC_PM25.rds")
+  SCC <- readRDS("./Course Project 2/Source_Classification_Code.rds")
   
-  ## Plot the historgram and display to the screen. 
-  hist(data_sub$Global_active_power, col = "RED", main="Global Active Power", xlab="Global Active Power (kilowatts)", ylab="Frequency")
   
-  ## Png file saved to default working directory
+  # Sum the emission by year -- this might about a minute.
   
-  png(file="plot1.png", height=480, width=480)
-  hist(data_sub$Global_active_power, col = "RED", main="Global Active Power", xlab="Global Active Power (kilowatts)", ylab="Frequency")
+  total_emissions_by_year <- aggregate(NEI$Emissions, by = list(NEI$year), FUN = sum)
+  
+  total_emissions_by_year
+  total_emissions_by_year_mill <- round(total_emissions_by_year[, 2] / 1000000, 2)
+  
+  ## Plotting and file saving 
+  png(filename = "./Course Project 2/plot1.png", height = 600, width = 700)
+  
+  par(mar=c(5,5,5,0))
+  
+  barplot(total_emissions_by_year_mill, names.arg = total_emissions_by_year$Group.1,
+          main = "Annual amount of PM2.5 emitted in the USA", xlab = "Year", ylab = "Amount of PM2.5 emitted, in millio tons", col = "purple", cex.lab= 1.15)
   dev.off()
+}

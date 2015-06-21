@@ -1,38 +1,22 @@
-## Read the ; deliminated text file and save in a dtaa frame
-  df_all <- read.csv("household_power_consumption.txt", header=TRUE, sep=';', na.strings="?",stringsAsFactors=FALSE)
+plot4 <- function()
+{
+  ## Read RDS files
   
-  df_all$Date <- as.Date(df_all$Date, format="%d/%m/%Y")
+  ## currect directory is Getting and Cleaning Data. Files are in Course Project 2 in the current working directory
   
-  ## Only data for 2007-02-01 and 2007-02-02 required.
+  NEI <- readRDS("./Course Project 2/summarySCC_PM25.rds")
+  SCC <- readRDS("./Course Project 2/Source_Classification_Code.rds")
   
-  data_sub <- subset(df_all, subset=(Date >= "2007-02-01" & Date <= "2007-02-02"))
+ 
+  SCC.coal = SCC[grepl("coal", SCC$Short.Name, ignore.case = TRUE), ]
   
-  ## Date and time type/format conversion
-  datetime <- paste(as.Date(data_sub$Date), data_sub$Time)
-  data_sub$Datetime <- as.POSIXct(datetime)
+ 
+  merge <- merge(x = NEI, y = SCC.coal, by = 'SCC')
+  merge.sum <- aggregate(merge[, 'Emissions'], by = list(merge$year), sum)
+  colnames(merge.sum) <- c('Year', 'Emissions')
   
-  png(file="plot4.png", height=480, width=480)
-  
-  
-  ## Plot set up/configuration 
-  par(mfrow=c(2,2))
-  
-  with(data_sub, {
-    
-    ## First plot 
-    plot(Global_active_power~Datetime, type="l", ylab="Global Active Power (kilowatts)", xlab="")
-    
-    ## Second plot
-    plot(Voltage~Datetime, type="l", ylab="Voltage (volt)", xlab="")
-    
-    ## Third plot
-    plot(Sub_metering_1~Datetime, type="l", ylab="Global Active Power (kilowatts)", xlab="")
-    lines(Sub_metering_2~Datetime,col='RED')
-    lines(Sub_metering_3~Datetime,col='BLUE')
-    legend("topright", col=c("black", "red", "blue"), lty=1, lwd=2, bty="n",legend=c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"))
-    
-    #Fourth Plot 
-    plot(Global_reactive_power~Datetime, type="l", ylab="Global Rective Power (kilowatts)",xlab="")
-  })
-  
+  ## Plotting and file saving 
+  png(filename = "./Course Project 2/plot4.png", height = 600, width = 700)
+  ggplot(data = merge.sum, aes(x = Year, y = Emissions / 1000)) + geom_line(aes(group = 1, col = Emissions)) + geom_point(aes(size = 2, col = Emissions)) + ggtitle(expression('Total Emissions of PM'[2.5])) + ylab(expression(paste('PM', ''[2.5], ' in kilotons'))) + geom_text(aes(label = round(Emissions / 1000, digits = 2), size = 2, hjust = 1.5, vjust = 1.5)) + theme(legend.position = 'none') + scale_colour_gradient(low = 'black', high = 'red')
   dev.off()
+}
